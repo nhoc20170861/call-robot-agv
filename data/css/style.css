@@ -1,0 +1,253 @@
+@import url("https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&display=swap");
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Montserrat", sans-serif;
+}
+h1 {
+    font-size: 1.8rem;
+    color: white;
+}
+h4 {
+    padding-top: 8px;
+}
+
+p {
+    font-size: 1.4rem;
+}
+
+body {
+    margin: 0;
+}
+
+.content {
+    padding: 15px;
+}
+
+.card-grid {
+    max-width: 800px;
+    margin: 0 auto;
+    display: grid;
+    grid-gap: 2rem;
+    text-align: center;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.card {
+    padding: 15px 40px;
+    background-color: white;
+    box-shadow: 2px 2px 12px 1px rgba(140, 140, 140, 0.5);
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #034078;
+}
+
+input[type="submit"] {
+    border: none;
+    color: #fefcfb;
+    background-color: #034078;
+    padding: 15px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 100px;
+    margin-right: 10px;
+    border-radius: 4px;
+    transition-duration: 0.4s;
+}
+
+input[type="submit"]:hover {
+    background-color: #1282a2;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    width: 70%;
+    padding: 12px 20px;
+    margin: 15px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+label {
+    font-size: 1.2rem;
+    color: #333;
+}
+.value {
+    font-size: 1.2rem;
+    color: #1282a2;
+}
+
+.ip_address {
+    font-size: 1.2rem;
+    color: #a21212;
+    padding-bottom: 5px;
+}
+
+#tables {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+#tables .header th {
+    background-color: #ff99ff;
+}
+
+#tables td,
+#tables th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#tablestr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#tables tr:hover {
+    background-color: #ddd;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 120px;
+    height: 65px;
+}
+.switch input {
+    display: none;
+}
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 34px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 50px;
+    width: 50px;
+    left: 8px;
+    bottom: 8px;
+    background-color: #fff;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
+    border-radius: 68px;
+}
+input:checked + .slider {
+    background-color: #2196f3;
+}
+input:checked + .slider:before {
+    -webkit-transform: translateX(52px);
+    -ms-transform: translateX(52px);
+    transform: translateX(52px);
+}
+
+.update-time {
+    font-size: 1rem;
+    color: #1282a2;
+    padding-top: 8px;
+}
+
+/* Add a black background color to the top navigation */
+nav.topnav {
+    background-color: #333;
+    overflow: hidden;
+    padding: 5px 40px;
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+nav ul li {
+    padding: 15px 0;
+    cursor: pointer;
+}
+nav ul li.items {
+    position: relative;
+    width: auto;
+    margin: 0 16px;
+    text-align: center;
+    order: 3;
+}
+nav ul li.items:after {
+    position: absolute;
+    content: "";
+    left: 0;
+    bottom: 5px;
+    height: 2px;
+    width: 100%;
+    background: #33ffff;
+    opacity: 0;
+    transition: all 0.2s linear;
+}
+nav ul li.items:hover:after {
+    opacity: 1;
+    bottom: 8px;
+}
+nav ul li.logo {
+    flex: 1;
+    color: white;
+    font-size: 23px;
+    font-weight: 600;
+    cursor: default;
+    user-select: none;
+}
+nav ul li a {
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+    transition: 0.4s;
+}
+nav ul li:hover a {
+    color: cyan;
+}
+nav ul li i {
+    font-size: 23px;
+}
+nav ul li.btn_nav {
+    display: none;
+}
+nav ul li.btn_nav.hide i:before {
+    content: "\f00d";
+}
+.active {
+    color: #33ff00;
+}
+@media all and (max-width: 900px) {
+    nav {
+        padding: 5px 30px;
+    }
+    nav ul li.items {
+        width: 100%;
+        display: none;
+    }
+    nav ul li.items.show {
+        display: block;
+    }
+    nav ul li.btn_nav {
+        display: block;
+    }
+    nav ul li.items:hover {
+        border-radius: 5px;
+        box-shadow: inset 0 0 5px #33ffff, inset 0 0 10px #66ffff;
+    }
+    nav ul li.items:hover:after {
+        opacity: 0;
+    }
+}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>ESP Wi-Fi Manager</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="data:," />
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    </head>
+    <body>
+        <div
+            style="
+                overflow: hidden;
+                background-color: #0a1128;
+                color: aliceblue;
+                text-align: center;
+                padding: 15px;
+            "
+        >
+            <h1>ESP Wi-Fi Manager</h1>
+        </div>
+        <div class="content">
+            <div class="card-grid">
+                <div class="card">
+                    <p class="card-title">WIFI Config</p>
+                    <br />
+                    <form action="/" method="POST">
+                        <div style="overflow-x: auto">
+                            <table id="tables" style="overflow-x: auto">
+                                <tr>
+                                    <td><label for="ssid">SSID</label></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="ssid"
+                                            name="ssid"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label for="pass">Password</label></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="pass"
+                                            name="pass"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label for="ip">IP Address</label></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="ip"
+                                            name="ip"
+                                            value="192.168.1.200"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="gateway"
+                                            >Gateway Address</label
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="gateway"
+                                            name="gateway"
+                                            value="192.168.1.1"
+                                        />
+                                    </td>
+                                </tr>
+                            </table>
+                            <br /><input type="submit" value="Submit" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
