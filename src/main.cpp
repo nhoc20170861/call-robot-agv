@@ -293,8 +293,8 @@ void Task1code(void *pvParameters)
 
     case 2: // Get Id Robot
     {
-      // String response = CallRobotObject->HttpGet("http://172.20.2.50:8080/api/Remote/Robots?model=agv-500&map=demo-f1");
-      String response = CallRobotObject->HttpGet("http://172.20.2.66:8080/api/Remote/Robots?model=agv-line&map=demo-f1");
+
+      String response = CallRobotObject->getIdforAllRobot();
       if (response == "error")
       {
         response = "{\"result\":\"error\"}";

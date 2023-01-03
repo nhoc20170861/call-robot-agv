@@ -102,11 +102,17 @@ String CallRobot::HttpDelete(String url)
   return "WiFiLost";
 }
 
-String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String processRobot)
+String CallRobot::getIdforAllRobot()
 {
   String url = "http://" + _Ip + ":" + _Port + "/api/Remote/Robots?model=" + _Model + "&map=" + _MapName;
   Serial.println(url);
-  String DataResult = HttpGet(url);
+  String result = HttpGet(url);
+  return result;
+}
+String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String processRobot)
+{
+
+  String DataResult = getIdforAllRobot();
 
   if (DataResult == "error")
     return "Get Id error";

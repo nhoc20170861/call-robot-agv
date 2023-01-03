@@ -73,6 +73,7 @@ public:
 
     String getRobotName(void);
     String getIdRobotCurrent(void);
+    String getIdforAllRobot(void);
     int flagNavigationTo = 0;
 };
 
