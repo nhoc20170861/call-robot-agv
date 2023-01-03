@@ -2,7 +2,7 @@
 #define __CALLROBOT__
 
 #include <HTTPClient.h>
-#include "../lib/ArduinoJson/ArduinoJson.h"
+#include <ArduinoJson.h>
 
 enum StationStatus
 {
