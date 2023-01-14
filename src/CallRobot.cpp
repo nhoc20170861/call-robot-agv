@@ -3,6 +3,10 @@ String CallRobot::getRobotName(void)
 {
   return RobotName;
 }
+String CallRobot::getStationID(void)
+{
+  return StationID;
+}
 String CallRobot::getIdRobotCurrent(void)
 {
   return RobotId;
@@ -233,50 +237,39 @@ bool CallRobot::CancelTask(String taskName, String robotId)
 
 String CallRobot::CallingRobot()
 {
-  RobotId = getIdRobotForCall(StatusRobot, TaskStationName, ProcessingRobot);
-  if (RobotId == "Get Id error" || RobotId == "")
-    return "Get RobotId for Calling error";
+  if (StationStatusRuntime != StationStatus::unknown)
+  {
+    RobotId = getIdRobotForCall(StatusRobot, TaskStationName, ProcessingRobot);
+    if (RobotId == "Get Id error" || RobotId == "")
+      return "Get RobotId for Calling error";
+  }
+  else
+  {
+    int ProcessTask = getTask(TaskStationName, RobotId);
+    if (ProcessTask == 0) // RobotId current no valiable connection
+    {
+      return "Waiting until Robot reconnects";
+    }
+  }
+
   bool result = runTask(TaskStationName, StationName, RobotId); // runTask NavigationTo on robot agv, and register Station-1
 
   if (!result)
-    return "Can't call robot " + RobotName + " run NavigationTo";
+    return "Can't call robot " + RobotName + " run task NavigationTo, try again!!";
   StationStatusRuntime = StationStatus::waiting; // Waitting for robot come
   flagNavigationTo = 1;                          // Robot begin run task NavigationTo
-  return "Waiting " + RobotName + " come to Station " + StationName;
+  return RobotName + " will come to Station " + StationName;
 }
 
 String CallRobot::GoHomeRobot()
 {
   if (RobotId == "" || RobotId == "Get Id error")
   {
+    // RobotId = getIdRobotForCall(StatusRobot, TaskStationName, ProcessingRobot);
+    return "Can't call Robot go home because missing current Robotid!!";
+  }
 
-    RobotId = getIdRobotForCall(StatusRobot, TaskStationName, ProcessingRobot);
-
-    return "Get Id error";
-  }
-  int NavigationToStatus = getTask(TaskStationName, RobotId);
-  // 2: task is running, 3: task is runcomplete
-  if (NavigationToStatus == 2)
-  {
-    return RobotName + " is running task NavigationTo";
-  }
-  String ProcessingAGV = getState(ProcessingRobot, RobotId);
-  Serial.println("ProcessingAGV of " + RobotName + ": " + ProcessingAGV);
-  bool result;
-  if (ProcessingAGV == "UnKnown" || ProcessingAGV == "Done")
-  {
-    result = runTask(TaskLineName, LineName, RobotId); // runTask NavigationLine on robot agv, and register Station-7
-    // Serial.println("The state of NavigationTo is unknown ");
-  }
-  else
-  {
-    return "ProcessingAGV of " + RobotName + " is " + ProcessingAGV;
-    result = false;
-  }
-  // if (ProcessingAGV != "Done")
-  // {
-  //   return "The state of NavigationTo is not done ";
-  // }
+  bool result = runTask(TaskLineName, LineName, RobotId); // runTask NavigationLine on robot agv, and register Station-7
 
   if (!result)
     return "Can't call robot " + RobotName + " run NavigationLine";
@@ -288,14 +281,12 @@ String CallRobot::GoHomeRobot()
 
 bool CallRobot::CancelAction()
 {
-  if (StationStatusRuntime == StationStatus::waiting)
+  if (flagNavigationTo == 1)
   {
     bool result = CancelTask(TaskStationName, RobotId);
+    flagNavigationTo = 0;
   }
-  if (StationStatusRuntime == StationStatus::readyGoHome)
-  {
-    bool result = CancelTask(TaskLineName, RobotId);
-  }
+
   StationStatusRuntime = StationStatus::freeMission;
   RobotId = "";
   return true;

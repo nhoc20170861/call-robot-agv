@@ -11,7 +11,11 @@ String processorCallRobot(const String &var)
   {
     return initWiFi->ip;
   }
-  else if (var == "stateStation")
+  else if (var == "StationID")
+  {
+    return CallRobotObject->getStationID();
+  }
+  else if (var == "StateStation")
   {
     switch (CallRobotObject->StationStatusRuntime)
     {
@@ -90,38 +94,38 @@ void Task1code(void *pvParameters)
       timeGetStatusTask = millis();
     }
     // checking button press
-    if ((unsigned long)(millis() - timeRequestButtonCurent) > 200)
-    {
-      timeRequestButtonCurent = millis();
+    // if ((unsigned long)(millis() - timeRequestButtonCurent) > 200)
+    // {
+    //   timeRequestButtonCurent = millis();
 
-      if (digitalRead(BUTTON_INPUT) == SignalInput)
-      {
-        int count = 0;
-        while (digitalRead(BUTTON_INPUT) == SignalInput)
-        {
-          count++;
-          delay(1);
-        }
-        if (count > 3000)
-        {
-          // cancel programing
-          bool result = CallRobotObject->CancelAction();
-          Serial.println("Robot CancelAction, reset stateStation");
-          vTaskDelay(50 / portTICK_PERIOD_MS);
-          String message = " _Reset stateStation, please reload page_ ";
-          events.send(message.c_str(), "callRobotRun", millis());
-          BUTTON_LED_OFF;
-          taskControlWs2812 = 4;
+    //   if (digitalRead(BUTTON_INPUT) == SignalInput)
+    //   {
+    //     int count = 0;
+    //     while (digitalRead(BUTTON_INPUT) == SignalInput)
+    //     {
+    //       count++;
+    //       delay(1);
+    //     }
+    //     if (count > 3000)
+    //     {
+    //       // cancel task
+    //       bool result = CallRobotObject->CancelAction();
+    //       Serial.println("Robot CancelAction, then reset stateStation");
+    //       vTaskDelay(50 / portTICK_PERIOD_MS);
+    //       String message = " _Reset stateStation, please reload page_ ";
+    //       events.send(message.c_str(), "callRobotRun", millis());
+    //       BUTTON_LED_OFF;
+    //       taskControlWs2812 = 4;
 
-          // Reset station
-        }
-        else if (count > 99)
-        {
-          taskMission = 1;
-          Serial.println("ButtonGreen Click");
-        }
-      }
-    }
+    //       // Reset station
+    //     }
+    //     else if (count > 99)
+    //     {
+    //       taskMission = 1;
+    //       Serial.println("ButtonGreen Click");
+    //     }
+    //   }
+    // }
 
     switch (taskMission)
     {
@@ -244,9 +248,21 @@ void Task1code(void *pvParameters)
       taskMission = 0;
       break;
     }
+    case 3: // Reset State station and CancelTask
+    {
+      // Reset station
+      bool result = CallRobotObject->CancelAction();
+      Serial.println("Robot CancelAction, then reset stateStation");
+      vTaskDelay(50 / portTICK_PERIOD_MS);
+      String message = " Reset state of Station success, please reload page ";
+      events.send(message.c_str(), "callRobotRun", millis());
+      taskControlWs2812 = 4;
+      taskMission = 0;
+      break;
+    }
     }
 
-    vTaskDelay(20 / portTICK_PERIOD_MS);
+    vTaskDelay(50 / portTICK_PERIOD_MS);
   }
   vTaskDelete(NULL);
 }
@@ -299,6 +315,7 @@ void TaskReconnectWiFi(void *pvParameters)
         // If ESP32 inits successfully in station mode light up all pixels in a green color
         taskControlWs2812 = 1;
         task1_suspend = false;
+        taskMission = 0;
       }
     }
 
@@ -393,6 +410,10 @@ void TaskControlWs2812(void *pvParameters)
   vTaskDelete(NULL);
 }
 
+void IRAM_ATTR ISR()
+{
+  taskMission = 1;
+}
 void setup()
 {
   // put your setup code here, to run once:
@@ -401,6 +422,7 @@ void setup()
   pinMode(BUTTON_INPUT, INPUT_PULLUP);
   pinMode(BUTTON_LED, OUTPUT);
   BUTTON_LED_OFF;
+  attachInterrupt(BUTTON_INPUT, ISR, FALLING);
 
   // Initialize strips
   strip1.begin(); // Set brightness
@@ -466,11 +488,11 @@ void setup()
                 Serial.println("getidRobot");
                 request->send(200, "text/html", "Set getIdRobot success!"); });
     // Send a GET request to <ESP_IP>/httpGetURL?inputURL=<inputMessage>
-    server.on("/httpGetURL", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/resetStateStation", HTTP_POST, [](AsyncWebServerRequest *request)
               {
      
-
-      String response = "Waiting for Esp Call URL";
+      taskMission = 3;
+      String response = "Waiting for Station reset";
       request->send(200, "text/html", response.c_str()); });
 
     // Send a GET request to <ESP_IP>/httpSetPram?StationName=<inputMessage1>&LineName=<inputMessage2>

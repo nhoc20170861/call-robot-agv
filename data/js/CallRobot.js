@@ -94,5 +94,31 @@ $(document).ready(function () {
             }, 2000);
         });
     });
-    // this is the id of the form
+
+
+    const modal = $('.modal');
+    const btn_reset = $('.btn_reset');
+    const span_modal = $('.submit-reset');
+
+    btn_reset.click(function () {
+        // $(".btn_reset").prop("disabled", true);
+        console.log("btn_reset click!");
+        modal.show();
+    });
+
+    span_modal.click(function () {
+        $.post("/resetStateStation", {}, function (response) {
+            console.log(response);
+            modal.hide();
+
+        });
+    });
+
+    $(window).on('click', function (e) {
+        if ($(e.target).is('.modal')) {
+
+            modal.hide();
+        }
+    });
+
 });

@@ -44,9 +44,11 @@
                     <p class="ip_address">
                         IP Address: %IP%
                         <span>&nbsp; RSSID: %RSSI%</span>
+                        <span>&nbsp; StationID: </span>
+                        <span style="font-weight: bold"> %StationID% </span>
                         <span>&nbsp; State: </span>
                         <span id="state-station" style="font-weight: bold">
-                            %stateStation%
+                            %StateStation%
                         </span>
                     </p>
                     <p>
@@ -126,6 +128,14 @@
 ...</pre
                         >
                     </div>
+                </div>
+            </div>
+            <button class="btn_reset" type="button">Reset State</button>
+            <div class="modal">
+                <div class="modal-content">
+                    <span class="submit-reset">YES</span>
+
+                    <p>Are you sure reset station?</p>
                 </div>
             </div>
         </div>

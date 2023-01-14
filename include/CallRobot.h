@@ -19,6 +19,7 @@ private:
     String _Model = "";
     String _MapName = "";
     int _Port = 0;
+    String StationID = "Esp-01";
     String RobotId = "";
     String RobotName = "";
     String StationName = "station-1";
@@ -71,6 +72,7 @@ public:
     String getLineName(void);
 
     String getRobotName(void);
+    String getStationID(void);
     String getIdRobotCurrent(void);
     String getIdforAllRobot(void);
     int flagNavigationTo = 0;
