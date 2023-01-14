@@ -2,14 +2,13 @@
 #define __CALLROBOT__
 
 #include <HTTPClient.h>
-#include <ArduinoJson.h>
-
+#include <Arduino_JSON.h>
 enum StationStatus
 {
     freeMission = 1, // Trạng thái ban đầu khi chưa gọi robot đến
     waiting,         // Trạm gọi đang đợi Robot đến
-    readyGoHome,     // Trạm gọi sẽ ra lệnh cho Robot di chuyển đến vị trí trả hàng hoặc về (home)
-    unknown,
+    readyGoHome,     // Robot đã đến, có thể gọi Robot từ vị trí trạm gọi di chuyển đến vị trí trả hàng hoặc về (home)
+    unknown,         // Robot đang di chuyển đến trạm gọi nhưng bị mất tín hiệu
 };
 
 class CallRobot
@@ -48,7 +47,7 @@ public:
         _Model = RobotModel;
         _MapName = MapName;
     };
-    ~CallRobot();
+    ~CallRobot(){};
 
     StationStatus StationStatusRuntime = StationStatus::freeMission;
     String HttpGet(String url);

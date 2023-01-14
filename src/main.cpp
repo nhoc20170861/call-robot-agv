@@ -1,67 +1,6 @@
-#include <Arduino.h>
-#include <Adafruit_NeoPixel.h>
+#include "main.h"
 
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-#include <ArduinoJson.h>
-// #include <AsyncElegantOTA.h> // Library for Async OTA
-#include "SPIFFS.h"
-#include "EEPROM.h"
-#include "../include/EspSPIFFS.h"
-#include "../include/CallRobot.h"
-#include "../include/InitWiFi.h"
-
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
-
-// Create an Event Source on /events
-AsyncEventSource events("/events");
-
-// Create pointer object for class CallRobot and pass in 2 arguments: IP address of Robot and port
-// CallRobot *CallRobotObject = new CallRobot("172.20.0.201", 7245);
-CallRobot *CallRobotObject = new CallRobot("172.20.2.66", 8080);
-
-// Create pointer object for class EspSPIFFS
-EspSPIFFS *espSPIFFS = new EspSPIFFS();
-
-// Declare our NeoPixel strip object:
-#define STRIP_1_PIN 14 // GPIO the LEDs are connected to
-#define LED_COUNT 8    // Number of LEDs
-#define BRIGHTNESS 50  // NeoPixel brightness, 0 (min) to 255 (max)
-Adafruit_NeoPixel strip1(LED_COUNT, STRIP_1_PIN, NEO_GRB + NEO_KHZ800);
-
-// Define Button
-#define BUTTON_INPUT 18
-#define BUTTON_LED 19
-#define BUTTON_LED_ON digitalWrite(BUTTON_LED, HIGH);
-#define BUTTON_LED_OFF digitalWrite(BUTTON_LED, LOW);
-
-// define the number of bytes you want to access
-#define EEPROM_SIZE 4
-
-// Search for parameter in HTTP POST request
-const char *PARAM_INPUT_SSID = "ssid";
-const char *PARAM_INPUT_PASS = "pass";
-const char *PARAM_INPUT_IP = "ip";
-const char *PARAM_INPUT_GATEWAY = "gateway";
-
-// http authentication
-const char *http_username = "robotnet";
-const char *http_password = "Robotnet@2022";
-
-void colorWipe(uint32_t color, int wait)
-{
-  strip1.clear();
-  for (int i = 0; i < strip1.numPixels(); i++)
-  {                                 // For each pixel in strip...
-    strip1.setPixelColor(i, color); //  Set pixel's color (in RAM)
-    strip1.show();                  //  Update strip to match
-    delay(wait);                    //  Pause for a moment
-  }
-}
-void wifimanager_start();
-
-// Replaces placeholder
+// Callback
 String processorCallRobot(const String &var)
 {
   if (var == "RSSI")
@@ -70,7 +9,7 @@ String processorCallRobot(const String &var)
   }
   else if (var == "IP")
   {
-    return ip;
+    return initWiFi->ip;
   }
   else if (var == "stateStation")
   {
@@ -86,7 +25,6 @@ String processorCallRobot(const String &var)
     default:
       break;
     }
-    return ip;
   }
   else if (var == "StationName")
   {
@@ -99,65 +37,38 @@ String processorCallRobot(const String &var)
   return String();
 }
 
-// function handle when user get unknow router
-void notFound(AsyncWebServerRequest *request)
-{
-  request->send(404, "text/plain", "Not found");
-}
-
-// Pram input for requset, example : ?inputURL=<inputMessage>
-const char *PARAM_INPUT_URL = "inputURL";
-const char *PARAM_INPUT_StationName = "StationName";
-const char *PARAM_INPUT_LineName = "LineName";
-
-// declare object for taskhandle
-static TaskHandle_t Task1 = NULL;
-static TaskHandle_t Task2 = NULL;
-
-// variable use to active wifmanager
-bool wifimanager_status = false;
-
-int taskMission = 0; // use for Task1code to Call Api robot
-String httpURL = "";
-int taskControlWs2812 = 0; // use for TaskControlWs2812 to control led status
-
+// Task used to process logic Call Robot AGV
 void Task1code(void *pvParameters)
 {
   unsigned long timeRequestButtonCurent = millis();
   unsigned long timeGetStatusTask = millis(); // time wil Check Status Task NavigationTo
   Serial.println("task1 start on core:" + String(xPortGetCoreID()));
-  // EEPROM.begin(EEPROM_SIZE);
-  // EEPROM.write(0, 1); đồng bộ lại trạng thái ban đầu cho trạm gọi
-  // EEPROM.commit();
-  // int stionStatus = EEPROM.read(0);
-  // stationStatus = (stationStatus == 255) ? 1 : (stationStatus);
-
-  // if (StationStatus == 1)
-  // {
-  //   CallRobotObject->stationStatusRuntime = StationStatus::freeMission;
-  // }
-  // else if (StationStatus == 2)
-  // {
-  //   CallRobotObject->stationStatusRuntime = stationStatus::waitting;
-  // }
-  // else if (StationStatus == 3)
-  // {
-  //   CallRobotObject->stationStatusRuntime = stationStatus::readyreadyGoHome;
-  // }
   Serial.println("status station init: " + String(CallRobotObject->StationStatusRuntime));
-  // BUTTON_LED_OFF;
 
   int SignalInput = 0;
   while (1)
   {
-    String result = "e";
 
     if ((unsigned long)(millis() - timeGetStatusTask) > 2000 && (CallRobotObject->flagNavigationTo == 1))
     {
       int statusTask = CallRobotObject->getTask("NavigationTo", CallRobotObject->getIdRobotCurrent());
       String robotName = CallRobotObject->getRobotName();
-      taskControlWs2812 = 4;
-      if (statusTask == 2)
+      // 2: task is running, 3: task is runcomplete
+      if (statusTask == 0)
+      {
+        // Serial.println(robotName + " disconnected Flet manager then reconnected!! ");
+        String message = robotName + " disconnects to Fleet Manager!!!";
+        events.send(message.c_str(), "callRobotRun", millis());
+
+        CallRobotObject->StationStatusRuntime = StationStatus::unknown;
+        CallRobotObject->flagNavigationTo = 0;
+        taskControlWs2812 = 4;
+
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+        String stateStation = "unknow";
+        events.send(stateStation.c_str(), "stateStationESP", millis());
+      }
+      else if (statusTask == 2)
       {
         Serial.println(robotName + " is running task NavigationTo");
       }
@@ -166,13 +77,14 @@ void Task1code(void *pvParameters)
         Serial.println(robotName + "runs Task NavigationTo is completion");
         String message = robotName + " has arrived!!! ";
         events.send(message.c_str(), "callRobotRun", millis());
+
         CallRobotObject->flagNavigationTo = false;
         CallRobotObject->StationStatusRuntime = StationStatus::readyGoHome;
+        taskControlWs2812 = 6;
+
         vTaskDelay(50 / portTICK_PERIOD_MS);
         String stateStation = "readyGoHome";
         events.send(stateStation.c_str(), "stateStationESP", millis());
-
-        taskControlWs2812 = 5;
       }
       // Serial.println("statusTask"+String(statusTask));
       timeGetStatusTask = millis();
@@ -194,8 +106,14 @@ void Task1code(void *pvParameters)
         {
           // cancel programing
           bool result = CallRobotObject->CancelAction();
-          Serial.println("Robot CancelAction");
+          Serial.println("Robot CancelAction, reset stateStation");
+          vTaskDelay(50 / portTICK_PERIOD_MS);
+          String message = " _Reset stateStation, please reload page_ ";
+          events.send(message.c_str(), "callRobotRun", millis());
           BUTTON_LED_OFF;
+          taskControlWs2812 = 4;
+
+          // Reset station
         }
         else if (count > 99)
         {
@@ -211,6 +129,8 @@ void Task1code(void *pvParameters)
     {
       digitalWrite(BUTTON_LED, HIGH);
       String message = "";
+      String result = "e";
+      String stateStation = "...";
       // thuc hien 1 nhiem vu gi do
 
       switch (CallRobotObject->StationStatusRuntime)
@@ -220,24 +140,30 @@ void Task1code(void *pvParameters)
       {
 
         result = CallRobotObject->CallingRobot();
+        // After call Robot to station success, StationStatus will change to wating
         vTaskDelay(50 / portTICK_PERIOD_MS);
-
-        message = "PrevState(1): " + String(result);
+        message = "PrevState(1): " + result;
         events.send(message.c_str(), "callRobotRun", millis());
 
         vTaskDelay(50 / portTICK_PERIOD_MS);
-        // Send notify to Web server to inform state of station changed
-        message = "waiting";
-        events.send(message.c_str(), "stateStationESP", millis());
 
+        // Send notify to Web server to inform state of station changed
+        if (CallRobotObject->StationStatusRuntime == StationStatus::waiting)
+        {
+          stateStation = "waiting";
+          events.send(stateStation.c_str(), "stateStationESP", millis());
+          taskControlWs2812 = 5;
+        }
         break;
       }
         // if robot's in callstation (station-1), call robot readyGoHome (station-7)
       case StationStatus::waiting:
       {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+
+        String robotName = CallRobotObject->getRobotName();
+        vTaskDelay(50 / portTICK_PERIOD_MS);
         // Send Events to the Web Server with the Sensor Readings
-        message = "PrevState(2): Station is busy";
+        message = "PrevState(2): Please, wait " + robotName + " go to station before call again!!";
         events.send(message.c_str(), "callRobotRun", millis());
 
         break;
@@ -246,11 +172,49 @@ void Task1code(void *pvParameters)
       case StationStatus::readyGoHome:
       {
         result = CallRobotObject->GoHomeRobot();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-        message = "PrevState(3): " + String(result);
+        // After call Robot to gohome success, StationStatus will change to freemission
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+
+        message = "PrevState(3): " + result;
         events.send(message.c_str(), "callRobotRun", millis());
 
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+
+        if (CallRobotObject->StationStatusRuntime == StationStatus::freeMission)
+        {
+          taskControlWs2812 = 4;
+          stateStation = "freeMission";
+          events.send(stateStation.c_str(), "stateStationESP", millis());
+        }
         break;
+      }
+      case StationStatus::unknown:
+      {
+        result = CallRobotObject->CallingRobot();
+        String robotName = CallRobotObject->getRobotName();
+        if (result == "Waiting until Robot reconnects")
+        {
+          vTaskDelay(50 / portTICK_PERIOD_MS);
+          message = "Waiting until " + robotName + "reconnects";
+          events.send(message.c_str(), "callRobotRun", millis());
+        }
+        else
+        {
+          // After call Robot to station success, StationStatus will change to wating
+          vTaskDelay(50 / portTICK_PERIOD_MS);
+          message = "PrevState(4): " + result;
+          events.send(message.c_str(), "callRobotRun", millis());
+
+          vTaskDelay(50 / portTICK_PERIOD_MS);
+
+          // Send notify to Web server to inform state of station changed
+          if (CallRobotObject->StationStatusRuntime == StationStatus::waiting)
+          {
+            stateStation = "waiting";
+            events.send(stateStation.c_str(), "stateStationESP", millis());
+            taskControlWs2812 = 5;
+          }
+        }
       }
       default:
       {
@@ -258,75 +222,35 @@ void Task1code(void *pvParameters)
       }
       }
       Serial.println(result);
+
       // Control ws2812 follow stationStatus
       vTaskDelay(50 / portTICK_PERIOD_MS);
-      int stationStatus = CallRobotObject->StationStatusRuntime;
-      String stateStation = "h";
-
-      if (stationStatus == 1)
-      {
-        stateStation = "freeMission";
-        events.send(stateStation.c_str(), "stateStationESP", millis());
-        String stateStation = "hello";
-        taskControlWs2812 = 4;
-      }
-      else if (stationStatus == 3)
-      {
-        stateStation = "readyGoHome";
-        events.send(stateStation.c_str(), "stateStationESP", millis());
-
-        taskControlWs2812 = 6;
-      }
-      // stationStatus = CallRobotObject->StationStatusRuntime;
-      // EEPROM.write(0, stationStatus);
-      // EEPROM.commit();
-      // delay(10);
-      // Serial.println("StationStatus:  " + String(EEPROM.read(0)));
-
-      // notify to user with signal light
-
+      // notify to user with signal light in button
       BUTTON_LED_OFF;
-
       taskMission = 0;
       break;
     }
-
     case 2: // Get Id Robot
     {
-
       String response = CallRobotObject->getIdforAllRobot();
       if (response == "error")
       {
         response = "{\"result\":\"error\"}";
       }
-      // events.send(response.c_str(), "getIdRobot", millis());
+
+      // send response to client broser
       events.send(response.c_str(), "httpGetURL", millis());
       vTaskDelay(50 / portTICK_PERIOD_MS);
       taskMission = 0;
       break;
     }
-    case 3: // Call API server with method GET
-    {
-      String response = CallRobotObject->HttpGet(httpURL.c_str());
-      // Serial.println(response);
-      if (response == "error")
-      {
-        response = "{\"result\":\"error\"}";
-      }
-      events.send(response.c_str(), "httpGetURL", millis());
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-      taskMission = 0;
-    }
     }
 
-    // Serial.print("HighWaterMark:");
-    // Serial.println(uxTaskGetStackHighWaterMark(NULL));
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
   }
   vTaskDelete(NULL);
 }
 
-int count_retry_connect = 0;
 void TaskReconnectWiFi(void *pvParameters)
 {
 
@@ -334,8 +258,6 @@ void TaskReconnectWiFi(void *pvParameters)
   bool task1_suspend = false;
   while (1)
   {
-    // put your main code here, to run repeatedly:
-    // unsigned long currentMillis = millis();
 
     // if WiFi is down, tryreconnecting
     wl_status_t wifi_status = WiFi.status();
@@ -356,14 +278,14 @@ void TaskReconnectWiFi(void *pvParameters)
 
       count_retry_connect++;
 
-      if (count_retry_connect > 20)
-      {
+      // if (count_retry_connect > 20)
+      // {
 
-        Serial.println("Unable to reconnect to WiFi -> Start AP again");
-        wifimanager_status = true;
+      //   Serial.println("Unable to reconnect to WiFi -> Start AP again");
+      //   wifimanager_status = true;
 
-        wifimanager_start();
-      }
+      //   wifimanager_start();
+      // }
     }
     if ((wifi_status == WL_CONNECTED) && (wifimanager_status == false))
     {
@@ -371,8 +293,11 @@ void TaskReconnectWiFi(void *pvParameters)
       if (task1_suspend == true)
       {
         Serial.println("Reconnect to WiFi Success -> Task1code resum");
-        taskControlWs2812 = 1;
+
         vTaskResume(Task1); // resume Task1code
+        count_retry_connect = 0;
+        // If ESP32 inits successfully in station mode light up all pixels in a green color
+        taskControlWs2812 = 1;
         task1_suspend = false;
       }
     }
@@ -423,16 +348,7 @@ void TaskControlWs2812(void *pvParameters)
       { // For each pixel...
         strip1.setPixelColor(i, strip1.Color(255, 105, 180));
       }
-      String robotNameCurrent = CallRobotObject->getRobotName();
 
-      if (robotNameCurrent == "Nagase")
-      {
-        strip1.setPixelColor(5, strip1.Color(250, 0, 0));
-      }
-      else
-      {
-        strip1.setPixelColor(5, strip1.Color(0, 250, 0));
-      }
       strip1.show(); // Send the updated pixel colors to the hardware.
       break;
     }
@@ -443,16 +359,7 @@ void TaskControlWs2812(void *pvParameters)
       { // For each pixel...
         strip1.setPixelColor(i, strip1.Color(255, 105, 180));
       }
-      String robotNameCurrent = CallRobotObject->getRobotName();
 
-      if (robotNameCurrent == "Nagase")
-      {
-        strip1.setPixelColor(5, strip1.Color(250, 0, 0));
-      }
-      else
-      {
-        strip1.setPixelColor(5, strip1.Color(0, 250, 0));
-      }
       strip1.show(); // Send the updated pixel colors to the hardware.
       break;
     }
@@ -485,24 +392,6 @@ void TaskControlWs2812(void *pvParameters)
   }
   vTaskDelete(NULL);
 }
-void Wifi_connected(WiFiEvent_t event, WiFiEventInfo_t info)
-{
-  Serial.println("Successfully connected to Access Point:  " + String(ssid));
-
-  count_retry_connect = 0;
-  // If ESP32 inits successfully in station mode light up all pixels in a teal color
-  taskControlWs2812 = 1;
-}
-
-void Get_IPAddress_RSSI(WiFiEvent_t event, WiFiEventInfo_t info)
-{
-  Serial.println("WIFI is connected!");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  long rssi = WiFi.RSSI();
-  Serial.print("RSSI:");
-  Serial.println(rssi);
-}
 
 void setup()
 {
@@ -516,35 +405,40 @@ void setup()
   // Initialize strips
   strip1.begin(); // Set brightness
   strip1.setBrightness(BRIGHTNESS);
-  for (int i = 0; i < LED_COUNT; i++)
-  { // For each pixel...
-    strip1.setPixelColor(i, strip1.Color(0, 0, 250));
-    strip1.show();
-  }
+  colorWipe(strip1.Color(0, 0, 250), 0);
 
   // delete old config
   WiFi.disconnect(true);
-  WiFi.onEvent(Wifi_connected, ARDUINO_EVENT_WIFI_STA_CONNECTED);
-  WiFi.onEvent(Get_IPAddress_RSSI, ARDUINO_EVENT_WIFI_STA_GOT_IP);
-
   vTaskDelay(2000 / portTICK_PERIOD_MS);
 
   espSPIFFS->initSPIFFS();
 
-  // Read field ssid, pass, ip , gateway
-  ssid = espSPIFFS->readSSID(SPIFFS);
-  pass = espSPIFFS->readPASS(SPIFFS);
-  ip = espSPIFFS->readIP(SPIFFS);
-  gateway = espSPIFFS->readGATEWAY(SPIFFS);
+  // Read wifi config from SPIFFS
+  String configWiFi = espSPIFFS->readWiFiConfig(SPIFFS);
+  JSONVar myObject = JSON.parse(configWiFi);
+  Serial.println(configWiFi);
 
-  Serial.println(ssid);
-  Serial.println(pass);
-  Serial.println(ip);
-  Serial.println(gateway);
+  // Set new config wifi
+  initWiFi->ssid = (const char *)(myObject["SSID"]);
+  initWiFi->pass = (const char *)(myObject["Password"]);
+  initWiFi->ip = (const char *)(myObject["IP"]);
+  initWiFi->gateway = (const char *)(myObject["Gateway"]);
 
-  // Create mutex before starting tasks
-  // mutex = xSemaphoreCreateMutex();
-  if (initWiFi())
+  // Read SPIFFS in oder to update StationName and LineName
+  String stationConfig = espSPIFFS->readStationConfig(SPIFFS);
+  Serial.println(stationConfig);
+  myObject = JSON.parse(stationConfig);
+  String stationName = myObject["StationName"];
+  String lineName = myObject["LineName"];
+
+  if (stationName.length() > 0 && lineName.length() > 0)
+  {
+    CallRobotObject->setStationName(stationName.c_str());
+    CallRobotObject->setLineName(lineName.c_str());
+  }
+
+  // Start Webserver
+  if (initWiFi->init())
   {
     // Handle the Web Server in Station Mode
     // Route for root / web page
@@ -574,10 +468,7 @@ void setup()
     // Send a GET request to <ESP_IP>/httpGetURL?inputURL=<inputMessage>
     server.on("/httpGetURL", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-      String inputMessage = request->getParam(PARAM_INPUT_URL)->value();
-
-      taskMission = 3;
-      httpURL = inputMessage;
+     
 
       String response = "Waiting for Esp Call URL";
       request->send(200, "text/html", response.c_str()); });
@@ -594,6 +485,11 @@ void setup()
 
                   CallRobotObject->setStationName(inputMessage1.c_str());
                   CallRobotObject->setLineName(inputMessage2.c_str());
+
+                    // update new StationName and LineName into SPIFFS
+                  String stationConfig =  "{\"StationName\":\""+ inputMessage1 + "\",\"LineName\":\""+inputMessage2+"\"}";
+                  espSPIFFS->writeStationConfig(SPIFFS,stationConfig.c_str());
+
                   request->send(200, "text/html", "Set Pram success");
                 }
                 else
@@ -611,7 +507,7 @@ void setup()
                 } });
 
     // Start ElegantOTA
-    // AsyncElegantOTA.begin(&server, http_username, http_password);
+    AsyncElegantOTA.begin(&server, http_username, http_password);
 
     server.addHandler(&events);
     server.begin();
@@ -647,79 +543,16 @@ void setup()
       2,                 /* priority of the task */
       NULL,              /* Task handle */
       1);                /* Run on one core*/
-
-  Serial.println("Done!");
+  if (wifimanager_status == true)
+  {
+    vTaskSuspend(Task1);
+    vTaskSuspend(Task2);
+    Serial.println("Wait for completing WiFiManager");
+  } /* Run on one core*/
+  else
+    Serial.println("Setup Done!");
 }
 
 void loop()
 {
-}
-
-void wifimanager_start()
-{
-  // stop task until esp32 config wifi done
-
-  WiFi.disconnect(true);
-  // else initialize the ESP32 in Access Point mode
-  // light up all pixels in a red color
-  taskControlWs2812 = 3;
-  // Connect to Wi-Fi network with SSID and password
-  Serial.println("Setting AP (Access Point)");
-  // NULL sets an open Access Point
-  WiFi.softAP("ESP-WIFI-MANAGER", "22446688");
-
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
-  server.serveStatic("/", SPIFFS, "/");
-  // Web Server Root URL
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(SPIFFS, "/views/wifimanager.html", "text/html"); });
-
-  server.on("/", HTTP_POST, [](AsyncWebServerRequest *request)
-            {
-      int params = request->params();
-      for(int i=0;i<params;i++){
-        AsyncWebParameter* p = request->getParam(i);
-        if(p->isPost()){
-          // HTTP POST ssid value
-          if (p->name() == PARAM_INPUT_SSID) {
-            ssid = p->value().c_str();
-            Serial.print("SSID set to: ");
-            Serial.println(ssid);
-            // Write file to save value
-            espSPIFFS->writeSSID(SPIFFS,ssid.c_str());
-          }
-          // HTTP POST password value
-          if (p->name() == PARAM_INPUT_PASS) {
-            pass = p->value().c_str();
-            Serial.print("Password set to: ");
-            Serial.println(pass);
-            // Write file to save password
-            espSPIFFS->writePASS(SPIFFS, pass.c_str());
-          }
-          // HTTP POST ip value
-          if (p->name() == PARAM_INPUT_IP) {
-            ip = p->value().c_str();
-            Serial.print("IP Address set to: ");
-            Serial.println(ip);
-            // Write file to save value
-            espSPIFFS->writeIP(SPIFFS, ip.c_str()); 
-          }
-          // HTTP POST gateway value
-          if (p->name() == PARAM_INPUT_GATEWAY) {
-            gateway = p->value().c_str();
-            Serial.print("Gateway set to: ");
-            Serial.println(gateway);
-            // Write file to save value
-            espSPIFFS->writeGATEWAY(SPIFFS, gateway.c_str());
-          }
-          //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-        }
-      }
-      request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + ip);
-      //wifimanager_status = false;
-      delay(3000);
-      ESP.restart(); });
-  server.begin();
 }

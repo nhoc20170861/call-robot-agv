@@ -25,27 +25,20 @@ String EspSPIFFS::readFile(fs::FS &fs, const char *path)
   String fileContent;
   while (file.available())
   {
-    fileContent = file.readStringUntil('\n');
-    break;
+    fileContent += (char)file.read(); // file.readStringUntil('\n');
+    // break;
   }
   file.close();
   return fileContent;
 }
-String EspSPIFFS::readSSID(fs::FS &fs)
+
+String EspSPIFFS::readWiFiConfig(fs::FS &fs)
 {
-  return readFile(fs, ssidPath);
+  return readFile(fs, wifiConfigPath);
 }
-String EspSPIFFS::readPASS(fs::FS &fs)
+String EspSPIFFS::readStationConfig(fs::FS &fs)
 {
-  return readFile(fs, passPath);
-}
-String EspSPIFFS::readIP(fs::FS &fs)
-{
-  return readFile(fs, ipPath);
-}
-String EspSPIFFS::readGATEWAY(fs::FS &fs)
-{
-  return readFile(fs, gatewayPath);
+  return readFile(fs, stationConfigPath);
 }
 // Write file to SPIFFS
 void EspSPIFFS::writeFile(fs::FS &fs, const char *path, const char *message)
@@ -68,19 +61,13 @@ void EspSPIFFS::writeFile(fs::FS &fs, const char *path, const char *message)
   }
   file.close();
 }
-void EspSPIFFS::writeIP(fs::FS &fs, const char *message)
+
+void EspSPIFFS::writeWiFiConfig(fs::FS &fs, const char *message)
 {
-  writeFile(fs, ipPath, message);
+  writeFile(fs, wifiConfigPath, message);
 };
-void EspSPIFFS::writePASS(fs::FS &fs, const char *message)
+
+void EspSPIFFS::writeStationConfig(fs::FS &fs, const char *message)
 {
-  writeFile(fs, passPath, message);
-};
-void EspSPIFFS::writeSSID(fs::FS &fs, const char *message)
-{
-  writeFile(fs, ssidPath, message);
-};
-void EspSPIFFS::writeGATEWAY(fs::FS &fs, const char *message)
-{
-  writeFile(fs, gatewayPath, message);
+  writeFile(fs, stationConfigPath, message);
 };

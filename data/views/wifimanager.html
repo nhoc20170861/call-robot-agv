@@ -6,6 +6,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="data:," />
         <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/wifimanager.css" />
+        <script src="../js/index.js"></script>
     </head>
     <body>
         <div
@@ -21,9 +23,26 @@
         </div>
         <div class="content">
             <div class="card-grid">
+                <div>
+                    <p class="card-title">WIFIScan List</p>
+                    <br />
+                    <table id="table-WiFiList">
+                        <thead>
+                            <tr>
+                                <th id="th-id">ID</th>
+                                <th id="th-ssid">SSID</th>
+                                <th id="th-rssi">RSSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-tbody">
+                            %wifiScanList%
+                        </tbody>
+                    </table>
+                </div>
                 <div class="card">
                     <p class="card-title">WIFI Config</p>
                     <br />
+
                     <form action="/" method="POST">
                         <div style="overflow-x: auto">
                             <table id="tables" style="overflow-x: auto">

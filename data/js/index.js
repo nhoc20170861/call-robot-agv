@@ -28,3 +28,12 @@ function replaceClass(elem, oldClass, newClass) {
 const delay = (delayInms) => {
     return new Promise(resolve => setTimeout(resolve, delayInms));
 }
+
+// Function to add channel name for input channel play
+function add(element) {
+    const ssidInput = document.getElementById('ssid');
+    //  channelName = element.querySelector('#td-cName').textContent;
+    const indexSSID = element.querySelector('#td-ssid').textContent;
+    console.log(indexSSID);
+    ssidInput.value = indexSSID;
+}

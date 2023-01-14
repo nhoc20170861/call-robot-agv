@@ -120,18 +120,16 @@ String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String 
   {
     return "[GET] WiFiLost";
   }
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, DataResult);
-
+  JSONVar json = JSON.parse(DataResult);
   // Get size array
-  size_t length = doc.size();
+  size_t length = json.length();
   // Serial.println("Length: " + String(length));
   int indexForCallRobot = 0;
   char message[50];
   for (int i = 0; i < length; i++)
   {
-    const char *id = doc[i]["id"];
-    const char *name = doc[i]["name"];
+    const char *id = (const char *)json[i]["id"];
+    const char *name = (const char *)json[i]["name"];
     if (id == "")
       break;
 
@@ -159,7 +157,7 @@ String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String 
       continue;
 
     indexForCallRobot = i;
-    const char *robotname = doc[indexForCallRobot]["name"];
+    const char *robotname = (const char *)json[indexForCallRobot]["name"];
     sprintf(message, "%s", robotname);
     RobotName = String(message);
 
@@ -180,10 +178,9 @@ String CallRobot::getState(String stateName, String robotId)
     return "Get state error";
   }
 
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, DataResult);
-  const char *result = doc["result"];
-  bool isError = doc["isError"];
+  JSONVar json = JSON.parse(DataResult);
+  const char *result = json["result"];
+  bool isError = json["isError"];
   if (isError)
   {
     return "error";
@@ -200,10 +197,9 @@ int CallRobot::getTask(String taskName, String robotId)
   {
     return 0;
   }
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, DataResult);
-  int result = doc["result"]["status"];
-  bool isError = doc["isError"];
+  JSONVar json = JSON.parse(DataResult);
+  int result = json["result"]["status"];
+  bool isError = json["isError"];
   if (isError)
     return 0;
   return result;
@@ -217,9 +213,8 @@ bool CallRobot::runTask(String taskName, String pointName, String robotId)
   String DataResult = HttpPost(url, args);
   if (DataResult == "error")
     return NULL;
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, DataResult);
-  bool isError = doc["isError"];
+  JSONVar json = JSON.parse(DataResult);
+  bool isError = json["isError"];
   return ~isError;
 }
 
@@ -231,9 +226,8 @@ bool CallRobot::CancelTask(String taskName, String robotId)
   Serial.println(DataResult);
   if (DataResult == "")
     return NULL;
-  DynamicJsonDocument doc(1024);
-  deserializeJson(doc, DataResult);
-  bool isError = doc["isError"];
+  JSONVar json = JSON.parse(DataResult);
+  bool isError = json["isError"];
   return isError;
 }
 
