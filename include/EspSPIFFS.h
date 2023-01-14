@@ -9,6 +9,8 @@ private:
     const char *passPath = "/config/pass.txt";
     const char *ipPath = "/config/ip.txt";
     const char *gatewayPath = "/config/gateway.txt";
+    const char *wifiConfigPath = "/config/wifiConfig.json";
+    const char *stationConfigPath = "/config/stationConfig.json";
 
 public:
     EspSPIFFS(){};
@@ -16,17 +18,13 @@ public:
 
     void initSPIFFS();
     String readFile(fs::FS &fs, const char *path);
-
-    String readIP(fs::FS &fs);
-    String readSSID(fs::FS &fs);
-    String readPASS(fs::FS &fs);
-    String readGATEWAY(fs::FS &fs);
-
     void writeFile(fs::FS &fs, const char *path, const char *message);
-    void writeIP(fs::FS &fs, const char *message);
-    void writePASS(fs::FS &fs, const char *message);
-    void writeSSID(fs::FS &fs, const char *message);
-    void writeGATEWAY(fs::FS &fs, const char *message);
+
+    String readStationConfig(fs::FS &fs);
+    void writeStationConfig(fs::FS &fs, const char *message);
+
+    String readWiFiConfig(fs::FS &fs);
+    void writeWiFiConfig(fs::FS &fs, const char *message);
 };
 
 #endif

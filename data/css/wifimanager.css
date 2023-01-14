@@ -1,0 +1,59 @@
+/*css for table WiFiList*/
+#table-WiFiList {
+    width: 100%;
+}
+#table-WiFiList tbody,
+#table-WiFiList thead {
+    width: 100%;
+}
+#table-WiFiList tbody {
+    overflow-y: auto;
+    overflow-x: auto;
+    word-wrap: break-word;
+}
+
+#table-WiFiList thead tr th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+    background-color: #04aa6d;
+    color: white;
+}
+
+#table-WiFiList thead #th-id {
+    width: 20%;
+}
+#table-WiFiList thead #th-ssid {
+    width: 50%;
+}
+
+#table-WiFiList thead #th-rssi {
+    width: 30%;
+}
+
+#table-WiFiList tbody tr td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#table-WiFiList tbody #td-id {
+    width: 20%;
+}
+
+#table-WiFiList tbody #td-ssid {
+    width: 50%;
+}
+
+#table-WiFiList tbody #td-rssi {
+    width: 30%;
+}
+
+#table-WiFiList tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#table-WiFiList tr:hover {
+    background-color: #ddd;
+}
