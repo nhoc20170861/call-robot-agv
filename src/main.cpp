@@ -78,7 +78,7 @@ void Task1code(void *pvParameters)
       }
       else if (statusTask == 3)
       {
-        Serial.println(robotName + "runs Task NavigationTo is completion");
+        Serial.println(robotName + " runs Task NavigationTo is completion");
         String message = robotName + " has arrived!!! ";
         events.send(message.c_str(), "callRobotRun", millis());
 
@@ -283,9 +283,12 @@ void TaskReconnectWiFi(void *pvParameters)
 
       Serial.print(millis());
       Serial.println(" Reconnecting to WiFi...");
-
-      task1_suspend = true;
-      vTaskSuspend(Task1); // suspend Task1code
+      if (task1_suspend == false)
+      {
+        task1_suspend = true;
+        vTaskSuspend(Task1); // suspend Task1code
+        // detachInterrupt(BUTTON_INPUT); // detachInterrupt when reconnect wifi
+      }
 
       WiFi.disconnect();
       WiFi.reconnect();
@@ -315,6 +318,7 @@ void TaskReconnectWiFi(void *pvParameters)
         // If ESP32 inits successfully in station mode light up all pixels in a green color
         taskControlWs2812 = 1;
         task1_suspend = false;
+        // attachInterrupt(BUTTON_INPUT, ISR, FALLING); // attachInterrupt again
         taskMission = 0;
       }
     }
@@ -410,10 +414,6 @@ void TaskControlWs2812(void *pvParameters)
   vTaskDelete(NULL);
 }
 
-void IRAM_ATTR ISR()
-{
-  taskMission = 1;
-}
 void setup()
 {
   // put your setup code here, to run once:
@@ -462,6 +462,7 @@ void setup()
   // Start Webserver
   if (initWiFi->init())
   {
+    taskControlWs2812 = 1; // WiFi connected
     // Handle the Web Server in Station Mode
     // Route for root / web page
     server.serveStatic("/", SPIFFS, "/");

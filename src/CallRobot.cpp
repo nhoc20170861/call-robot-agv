@@ -68,7 +68,8 @@ String CallRobot::HttpPost(String url, String data)
   {
     HTTPClient http;
     http.begin(url);
-    int httpCode = http.POST(data);
+    http.addHeader("Content-Type", "text/plain");
+    int httpCode = http.POST(data.c_str());
 
     if (httpCode > 0)
     {
@@ -129,7 +130,7 @@ String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String 
   size_t length = json.length();
   // Serial.println("Length: " + String(length));
   int indexForCallRobot = 0;
-  char message[50];
+  char message[100];
   for (int i = 0; i < length; i++)
   {
     const char *id = (const char *)json[i]["id"];
@@ -139,7 +140,7 @@ String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String 
 
     String StatusAGV = getState(statusRobot, id);
 
-    sprintf(message, "StatusAGV of: %s is %s", name, StatusAGV);
+    sprintf(message, "StatusAGV of %s is %s", name, StatusAGV);
     Serial.println(message);
     if (StatusAGV != "Stopping") // Find robot has state (StatusAGV) = Stopping
     {
@@ -155,9 +156,10 @@ String CallRobot::getIdRobotForCall(String statusRobot, String taskName, String 
       continue;
     }
     String ProcessingAGV = getState(processRobot, id);
-    sprintf(message, "ProcessAGV of: %s is %s", name, ProcessingAGV);
+
+    sprintf(message, "ProcessAGV of %s is %s", name, ProcessingAGV);
     Serial.println(message);
-    if (ProcessingAGV != "Done" && ProcessingAGV != "UnKnown") // Find robot has state (ProcessingsAGV) = Done or UnKnow
+    if (ProcessingAGV != "DoneNavigationLine" && ProcessingAGV != "UnKnown") // Find robot has state (ProcessingsAGV) = Done or UnKnow
       continue;
 
     indexForCallRobot = i;
@@ -183,7 +185,7 @@ String CallRobot::getState(String stateName, String robotId)
   }
 
   JSONVar json = JSON.parse(DataResult);
-  const char *result = json["result"];
+  const char *result = (const char *)json["result"];
   bool isError = json["isError"];
   if (isError)
   {
@@ -211,9 +213,9 @@ int CallRobot::getTask(String taskName, String robotId)
 
 bool CallRobot::runTask(String taskName, String pointName, String robotId)
 {
-  String url = "http://" + _Ip + ":" + _Port + "/api/Remote/Robot/" + robotId + "/Task/" + taskName + "?args=" + pointName;
-  String args = "args=" + pointName;
-  Serial.println(url);
+  String url = "http://" + _Ip + ":" + _Port + "/api/Remote/Robot/" + robotId + "/Task/" + taskName + "?args=" + pointName + "&args=" + StationID;
+  String args = "args=" + pointName + "&args=" + StationID;
+  // Serial.println(url);
   String DataResult = HttpPost(url, args);
   if (DataResult == "error")
     return NULL;
@@ -225,7 +227,7 @@ bool CallRobot::runTask(String taskName, String pointName, String robotId)
 bool CallRobot::CancelTask(String taskName, String robotId)
 {
   String url = "http://" + _Ip + ":" + _Port + "/api/Remote/Robot/" + robotId + "/Task/" + taskName;
-  Serial.println(url);
+  // Serial.println(url);
   String DataResult = HttpDelete(url);
   Serial.println(DataResult);
   if (DataResult == "")

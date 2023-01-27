@@ -87,6 +87,11 @@ void notFound(AsyncWebServerRequest *request)
     request->send(404, "text/plain", "Not found");
 }
 
+void IRAM_ATTR ISR()
+{
+    taskMission = 1;
+}
+
 JSONVar wifiScanList;
 String processorWiFiManager(const String &var)
 {
