@@ -5,10 +5,6 @@ class EspSPIFFS
 {
 private:
     // File paths to save input values permanently
-    const char *ssidPath = "/config/ssid.txt";
-    const char *passPath = "/config/pass.txt";
-    const char *ipPath = "/config/ip.txt";
-    const char *gatewayPath = "/config/gateway.txt";
     const char *wifiConfigPath = "/config/wifiConfig.json";
     const char *stationConfigPath = "/config/stationConfig.json";
 

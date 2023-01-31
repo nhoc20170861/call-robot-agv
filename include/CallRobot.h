@@ -15,10 +15,10 @@ class CallRobot
 {
 private:
     // HTTPClient HttpClient;
-    String _Ip = ""; // biến lưu địa chỉ của server Flet Manager
-    String _Model = "";
-    String _MapName = "";
-    int _Port = 0;
+    String _Ip = "";      // biến lưu địa chỉ của Server Fleet Manager
+    String _Model = "";   // biến lưu model của robot agv
+    String _MapName = ""; // biến lưu tên Map robot đang chạy
+    int _Port = 0;        // biến lưu port của Server Fleet Manager
     String StationID = "Esp-01";
     String RobotId = "";
     String RobotName = "";
