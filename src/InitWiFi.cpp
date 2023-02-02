@@ -1,7 +1,7 @@
 
 #include "InitWiFi.h"
 
-bool InitWiFi::init()
+bool InitWiFi::connectWiFi()
 {
     IPAddress localIP;
     // IPAddress localIP(192, 168, 1, 200); // hardcoded
@@ -66,4 +66,14 @@ bool InitWiFi::init()
     Serial.println(rssi);
 
     return true;
+}
+
+void InitWiFi::setPram(String configWiFi)
+{
+    // Set new config wifi
+    JSONVar myObject = JSON.parse(configWiFi);
+    ssid = (const char *)(myObject["SSID"]);
+    pass = (const char *)(myObject["Password"]);
+    ip = (const char *)(myObject["IP"]);
+    gateway = (const char *)(myObject["Gateway"]);
 }

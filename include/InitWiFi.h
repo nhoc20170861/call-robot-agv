@@ -1,7 +1,7 @@
 #ifndef __INITWIFI_H__
 #define __INITWIFI_H__
 #include <WiFi.h>
-
+#include <Arduino_JSON.h>
 class InitWiFi
 {
 private:
@@ -16,7 +16,7 @@ public:
     String pass;
     String ip;
     String gateway;
-
-    bool init();
+    void setPram(String configWiFi);
+    bool connectWiFi();
 };
 #endif

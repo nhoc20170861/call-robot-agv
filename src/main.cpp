@@ -437,19 +437,14 @@ void setup()
 
   // Read wifi config from SPIFFS
   String configWiFi = espSPIFFS->readWiFiConfig(SPIFFS);
-  JSONVar myObject = JSON.parse(configWiFi);
-  Serial.println(configWiFi);
 
-  // Set new config wifi
-  initWiFi->ssid = (const char *)(myObject["SSID"]);
-  initWiFi->pass = (const char *)(myObject["Password"]);
-  initWiFi->ip = (const char *)(myObject["IP"]);
-  initWiFi->gateway = (const char *)(myObject["Gateway"]);
+  Serial.println(configWiFi);
+  initWiFi->setPram(configWiFi);
 
   // Read SPIFFS in oder to update StationName and LineName
   String stationConfig = espSPIFFS->readStationConfig(SPIFFS);
   Serial.println(stationConfig);
-  myObject = JSON.parse(stationConfig);
+  JSONVar myObject = JSON.parse(stationConfig);
   String stationName = myObject["StationName"];
   String lineName = myObject["LineName"];
 
@@ -460,7 +455,7 @@ void setup()
   }
 
   // Start Webserver
-  if (initWiFi->init())
+  if (initWiFi->connectWiFi())
   {
     taskControlWs2812 = 1; // WiFi connected
     // Handle the Web Server in Station Mode
