@@ -219,6 +219,7 @@ void Task1code(void *pvParameters)
             taskControlWs2812 = 5;
           }
         }
+        break;
       }
       default:
       {
@@ -337,13 +338,7 @@ void TaskControlWs2812(void *pvParameters)
     case 1: // Indicator WiFi connected
     {
       /* code */
-      strip1.clear();
-      for (int i = 0; i < LED_COUNT; i++)
-      { // For each pixel...
-        strip1.setPixelColor(i, strip1.Color(0, 255, 0));
-
-        strip1.show(); // Send the updated pixel colors to the hardware.
-      }
+      colorWipe(strip1.Color(0, 255, 0), 0);
       break;
     }
     case 2: // Indicator WiFi reconnecting
@@ -353,12 +348,8 @@ void TaskControlWs2812(void *pvParameters)
     }
     case 3: // Indicator Esp32 start WiFi manager
     {
-      for (int i = 0; i < LED_COUNT; i++)
-      { // For each pixel...
-        strip1.setPixelColor(i, strip1.Color(250, 0, 0));
+      colorWipe(strip1.Color(250, 0, 0), 0); // Red light
 
-        strip1.show(); // Send the updated pixel colors to the hardware.
-      }
       break;
     }
     case 4: // statusStation == freeMission
